@@ -12,7 +12,7 @@ class TallerRegistrable(Protocol):
     """Datos mínimos que debe ofrecer el módulo de talleres."""
 
     id: str
-    capacidad: int
+    cupos: int
 
 
 class EstadoInscripcion(str, Enum):
@@ -97,7 +97,7 @@ def cupos_disponibles(
         and inscripcion.estado == EstadoInscripcion.CONFIRMADA
         for inscripcion in inscripciones
     )
-    return max(taller.capacidad - confirmadas, 0)
+    return max(taller.cupos - confirmadas, 0)
 
 
 def _ya_esta_inscrito(
