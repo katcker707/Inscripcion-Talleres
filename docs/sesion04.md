@@ -23,7 +23,7 @@ Quedan fuera de este aporte las inscripciones, participantes, cancelaciones, lis
 | Tarea | Responsable | Estado | Evidencia |
 |---|---|---|---|
 | Crear la clase `Talleres` | Ismael Diaz | Terminado | `proyecto/reglas_talleres.py` |
-| Guardar identificador, nombre, cupos y fecha | Ismael Diaz | Terminado | `tests/test_reglas_talleres.py` |
+| Guardar identificador, nombre, cupos y fecha | Ismael Diaz | Terminado | `tests/test_reglas.py` |
 | Calcular cupos disponibles | Ismael Diaz | Terminado | Método `calcular_cupos_disponibles()` |
 | Comprobar si existe cupo | Ismael Diaz | Terminado | Método `hay_cupo()` |
 | Registrar y buscar talleres | Ismael Diaz | Terminado | Clase `GestorTalleres` |

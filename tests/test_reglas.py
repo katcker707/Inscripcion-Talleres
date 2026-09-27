@@ -1,3 +1,4 @@
+import datetime
 from dataclasses import dataclass
 
 import pytest
@@ -13,15 +14,20 @@ from proyecto.reglas import (
     inscribir_participante,
     registrar_participante,
 )
+from proyecto.reglas_talleres import GestorTalleres, Talleres
 
 
 @dataclass(frozen=True)
 class TallerParaPruebas:
-    """Contrato mínimo que implementará el módulo de talleres."""
+    """Contrato mínimo que implementará el módulo de talleres para pruebas aisladas."""
 
     id: str
-    capacidad: int
+    cupos: int
 
+
+# ==============================================================================
+# BLOQUE 1: PRUEBAS DE USUARIOS / PARTICIPANTES (Marcos)
+# ==============================================================================
 
 def test_registra_participante_con_identificador_automatico():
     participantes = {}
@@ -54,10 +60,120 @@ def test_rechaza_nombre_vacio_sin_consumir_un_identificador():
     assert registrar_participante(participantes, "Ana Pérez").id == "P-001"
 
 
+def test_registrar_participantes_multiples_exitoso():
+    participantes = {}
+
+    p1 = registrar_participante(participantes, "Katrina")
+    p2 = registrar_participante(participantes, "Marcos")
+
+    assert p1.id == "P-001"
+    assert p1.nombre == "Katrina"
+    assert p2.id == "P-002"
+    assert "P-001" in participantes
+    assert "P-002" in participantes
+
+
+def test_rechaza_registro_participante_espacios_blanco():
+    participantes = {}
+
+    with pytest.raises(DatosParticipanteInvalidosError):
+        registrar_participante(participantes, "      ")
+
+
+# ==============================================================================
+# BLOQUE 2: PRUEBAS DE TALLERES (Ismael)
+# ==============================================================================
+
+def test_crear_taller_guarda_sus_datos():
+    taller = Talleres(
+        id_taller=1,
+        nombre="Python básico",
+        cupos=20,
+        fecha=datetime.date(2026, 10, 15),
+    )
+
+    assert taller.id == 1
+    assert taller.nombre == "Python básico"
+    assert taller.cupos == 20
+    assert taller.fecha == datetime.date(2026, 10, 15)
+
+
+def test_calcular_cupos_disponibles():
+    taller = Talleres(
+        id_taller=2,
+        nombre="Diseño gráfico",
+        cupos=5,
+        fecha=datetime.date(2026, 11, 10),
+    )
+
+    assert taller.calcular_cupos_disponibles(3) == 2
+
+
+def test_taller_lleno_no_tiene_cupo():
+    taller = Talleres(
+        id_taller=3,
+        nombre="Fotografía",
+        cupos=2,
+        fecha=datetime.date(2026, 12, 5),
+    )
+
+    assert taller.hay_cupo(2) is False
+
+
+def test_registrar_y_buscar_taller():
+    gestor = GestorTalleres()
+
+    taller = Talleres(
+        id_taller=4,
+        nombre="Marketing digital",
+        cupos=10,
+        fecha=datetime.date(2026, 11, 20),
+    )
+
+    gestor.registrar_taller(taller)
+
+    assert gestor.buscar_taller(4) is taller
+
+
+def test_rechazar_identificador_duplicado_sin_reemplazar():
+    gestor = GestorTalleres()
+
+    taller_original = Talleres(
+        id_taller=5,
+        nombre="Excel básico",
+        cupos=15,
+        fecha=datetime.date(2026, 12, 1),
+    )
+
+    taller_duplicado = Talleres(
+        id_taller=5,
+        nombre="Excel avanzado",
+        cupos=8,
+        fecha=datetime.date(2026, 12, 2),
+    )
+
+    gestor.registrar_taller(taller_original)
+
+    with pytest.raises(ValueError, match="Ya existe"):
+        gestor.registrar_taller(taller_duplicado)
+
+    assert gestor.buscar_taller(5) is taller_original
+
+
+def test_buscar_taller_inexistente_devuelve_none():
+    gestor = GestorTalleres()
+
+    assert gestor.buscar_taller(999) is None
+
+
+# ==============================================================================
+# BLOQUE 3: PRUEBAS DE INSCRIPCIONES E INTEGRACIÓN (Katrina)
+# ==============================================================================
+
 def test_inscribe_participante_y_confirma_la_plaza_disponible():
     participantes = {}
     participante = registrar_participante(participantes, "Ana Pérez")
-    taller = TallerParaPruebas(id="T-001", capacidad=2)
+    taller = TallerParaPruebas(id="T-001", cupos=2)
     talleres = {taller.id: taller}
     inscripciones = []
 
@@ -79,7 +195,7 @@ def test_inscribe_participante_y_confirma_la_plaza_disponible():
 def test_inscripcion_en_el_ultimo_cupo_deja_el_taller_sin_disponibilidad():
     participantes = {}
     participante = registrar_participante(participantes, "Ana Pérez")
-    taller = TallerParaPruebas(id="T-001", capacidad=1)
+    taller = TallerParaPruebas(id="T-001", cupos=1)
     talleres = {taller.id: taller}
     inscripciones = []
 
@@ -97,7 +213,7 @@ def test_inscripcion_en_el_ultimo_cupo_deja_el_taller_sin_disponibilidad():
 def test_rechaza_inscripcion_duplicada_sin_ocupar_otro_cupo():
     participantes = {}
     participante = registrar_participante(participantes, "Ana Pérez")
-    taller = TallerParaPruebas(id="T-001", capacidad=2)
+    taller = TallerParaPruebas(id="T-001", cupos=2)
     talleres = {taller.id: taller}
     inscripciones = []
     inscribir_participante(
@@ -117,7 +233,7 @@ def test_rechaza_inscripcion_sin_cupo_y_no_modifica_el_estado():
     participantes = {}
     ana = registrar_participante(participantes, "Ana Pérez")
     bruno = registrar_participante(participantes, "Bruno Díaz")
-    taller = TallerParaPruebas(id="T-001", capacidad=1)
+    taller = TallerParaPruebas(id="T-001", cupos=1)
     talleres = {taller.id: taller}
     inscripciones = []
     inscribir_participante(
@@ -134,7 +250,7 @@ def test_rechaza_inscripcion_sin_cupo_y_no_modifica_el_estado():
 
 
 def test_rechaza_inscripcion_de_participante_inexistente_sin_modificar_el_estado():
-    taller = TallerParaPruebas(id="T-001", capacidad=2)
+    taller = TallerParaPruebas(id="T-001", cupos=2)
     inscripciones = []
 
     with pytest.raises(ParticipanteNoEncontradoError, match="P-999"):
@@ -160,3 +276,50 @@ def test_rechaza_inscripcion_en_taller_inexistente_sin_modificar_el_estado():
         )
 
     assert inscripciones == []
+
+
+def test_integracion_inscripcion_con_objeto_taller_real():
+    """Valida la comunicación directa entre los objetos reales de Talleres y el Módulo de Inscripciones."""
+    participantes = {}
+    p = registrar_participante(participantes, "Katrina")
+
+    taller = Talleres(
+        id_taller="T-100",
+        nombre="Scrum Avanzado",
+        cupos=3,
+        fecha=datetime.date(2026, 11, 1),
+    )
+    talleres = {taller.id: taller}
+    inscripciones = []
+
+    resultado = inscribir_participante(
+        p.id, taller.id, participantes, talleres, inscripciones
+    )
+
+    assert resultado.estado == EstadoInscripcion.CONFIRMADA
+    assert len(inscripciones) == 1
+    assert cupos_disponibles(taller, inscripciones) == 2
+
+
+def test_integracion_rechaza_inscripcion_duplicada_con_taller_real():
+    """Valida el manejo de duplicados usando instancias completas del sistema."""
+    participantes = {}
+    p = registrar_participante(participantes, "Marcos")
+
+    taller = Talleres(
+        id_taller="T-200",
+        nombre="Git & GitHub",
+        cupos=5,
+        fecha=datetime.date(2026, 11, 5),
+    )
+    talleres = {taller.id: taller}
+    inscripciones = []
+
+    inscribir_participante(p.id, taller.id, participantes, talleres, inscripciones)
+
+    with pytest.raises(InscripcionDuplicadaError):
+        inscribir_participante(
+            p.id, taller.id, participantes, talleres, inscripciones
+        )
+
+    assert len(inscripciones) == 1
