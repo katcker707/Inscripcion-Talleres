@@ -69,39 +69,3 @@ Persistencia en base de datos (MySQL/JSON), división por perfiles o roles de us
 Se realizaron en total 19 pruebas para definir la capacidad de las funciones con diferentes casos limites.
 **Resultado obtenido :**
 ```
-=================================================================== 19 passed in 0.02s ===================================================================
-```
-**Enlace del PR :**
-https://github.com/katcker707/Inscripcion-Talleres/pull/3
-(Tomar en cuenta que este PR fue el último donde se unifica los tests y se agrega otros adicionales, puesto en anteriores commits se fueron agregando otras pruebas.)
-**Commit demostrado :**  [feat: agrega main.py con menu interactivo y unifica tests de reglas y añade más para verificar la funcionalidad](https://github.com/katcker707/Inscripcion-Talleres/pull/3/changes/4b9e066636f39b4daf33d617bd28a5fc73b40b9f "feat: agrega main.py con menu interactivo y unifica tests de reglas y añade más para verificar la funcionalidad")
-
-## 8. Retroalimentación
-**Decisión del equipo:**
-Para mejorar la usabilidad interna de la consola antes de la demostración, el equipo decidió agregar una opción explícita en la CLI que permitiera consultar la lista de participantes registrados, facilitando la verificación de los IDs `P-XXX` generados sin necesidad de revisar las estructuras en memoria manualmente.
-
-**Ajuste realizado:**
-Se modificó `main.py` incorporando la opción de menú "6. Listar participantes registrados".
-
-## 9. Retrospectiva
-
-1. **Mantener:** Programación en parejas con rotación de teclado (Driver/Navigator). Ayudó a detectar inconsistencias entre las excepciones esperadas por los tests y las lanzadas en la lógica del dominio, ademas de prestar alta atencion a los pull request y mantener comunicación constante cuando estos ocurran.
-    
-2. **Cambiar:** La falta de consenso inicial en la nomenclatura de variables. Por ejemplo, en el módulo de talleres un integrante usó `capacidad` mientras otro usó `cupos`, lo cual generó errores al integrar. Debemos ser más detallistas al definir y ponernos de acuerdo sobre los nombres exactos de las variables antes de programar.
-    
-3. **Experimentar:** Diseñar una interfaz de usuario más intuitiva y accesible. Con el apoyo del docente y las observaciones de nuestros compañeros de curso, buscaremos adaptar la CLI para que sea fácil de entender y usar por cualquier tipo de persona.
-    
-
-## 10. Planificación y adaptación
-
-- **¿Qué decisión necesitaba planificación antes de programar?**
-    
-    Definir con qué funcionalidad se sentía más cómodo empezando cada integrante, acotar el límite de la entrega según la capacidad que queríamos cumplir (concentrarnos en PB-01) y ponernos de acuerdo en la definición de las variables compartidas entre los distintos módulos.
-    
-- **¿Qué decisión pudieron mejorar gracias a una prueba o a la revisión del cliente?**
-    
-    Gracias a las consultas con el cliente (el docente), nos ahorramos el trabajo de desarrollar un frontend o interfaz gráfica detallada y una base de datos, además de evitar centrar esfuerzos innecesarios en la lógica de roles de usuario para esta etapa.
-    
-- **¿En qué contexto de su proyecto sería útil fijar más detalles por anticipado?**
-    
-    En el diseño de la estructura de persistencia de datos (base de datos) y la definición clara de las futuras capacidades del backlog antes de implementarlas.

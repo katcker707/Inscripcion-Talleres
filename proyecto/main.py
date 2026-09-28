@@ -63,11 +63,16 @@ def ejecutar():
             except DatosParticipanteInvalidosError as e:
                 print(f" Error: {e}")
 
+
         elif opcion == "2":
+
             print("\n--- REGISTRAR TALLER ---")
+
             try:
                 nombre = input("Nombre del taller: ").strip()
+
                 cupos = int(input("Cantidad de cupos: "))
+
                 fecha = datetime.date.today()
 
                 # Generar automáticamente el ID (T-001, T-002...)
@@ -75,10 +80,13 @@ def ejecutar():
 
                 # Construir el objeto Talleres
                 taller = Talleres(
-                    id_taller=id_taller,
+
                     nombre=nombre,
+
                     cupos=cupos,
+
                     fecha=fecha,
+
                 )
 
                 # Registrar en el gestor
