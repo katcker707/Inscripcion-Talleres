@@ -12,6 +12,20 @@ from proyecto.reglas import (
 )
 from proyecto.reglas_talleres import GestorTalleres, Talleres
 
+
+def _siguiente_id_taller(talleres_dict: dict) -> str:
+    """Calcula el siguiente ID autoincremental (T-001, T-002...) basándose en las claves del diccionario."""
+    numeros_existentes = [
+        int(taller_id.removeprefix("T-"))
+        for taller_id in talleres_dict
+        if isinstance(taller_id, str)
+        and taller_id.startswith("T-")
+        and taller_id.removeprefix("T-").isdigit()
+    ]
+    siguiente_numero = max(numeros_existentes, default=0) + 1
+    return f"T-{siguiente_numero:03d}"
+
+
 def mostrar_menu():
     print("\n========================================")
     print("   SISTEMA DE GESTIÓN DE TALLERES")
@@ -21,7 +35,8 @@ def mostrar_menu():
     print("3. Listar talleres y cupos")
     print("4. Inscribir participante a un taller")
     print("5. Ver inscripciones realizadas")
-    print("6. Salir")
+    print("6. Listar participantes registrados")
+    print("7. Salir")
     print("========================================")
 
 
@@ -32,7 +47,7 @@ def ejecutar():
 
     while True:
         mostrar_menu()
-        opcion = input("Selecciona una opción (1-6): ").strip()
+        opcion = input("Selecciona una opción (1-7): ").strip()
 
         # Obtener diccionario de talleres de forma segura
         talleres_dict = getattr(
@@ -54,13 +69,16 @@ def ejecutar():
             print("\n--- REGISTRAR TALLER ---")
 
             try:
-
                 nombre = input("Nombre del taller: ").strip()
 
                 cupos = int(input("Cantidad de cupos: "))
 
                 fecha = datetime.date.today()
 
+                # Generar automáticamente el ID (T-001, T-002...)
+                id_taller = _siguiente_id_taller(talleres_dict)
+
+                # Construir el objeto Talleres
                 taller = Talleres(
 
                     nombre=nombre,
@@ -71,19 +89,12 @@ def ejecutar():
 
                 )
 
-                taller_registrado = gestor_talleres.registrar_taller(taller)
-
-                print(
-
-                    f" Taller '{nombre}' registrado con éxito. "
-
-                    f"ID: {taller_registrado.id}"
-
-                )
+                # Registrar en el gestor
+                gestor_talleres.registrar_taller(taller)
+                print(f" Taller '{nombre}' registrado con éxito. ID: {id_taller}")
 
             except ValueError as e:
-
-                print(f" Error: {e}")
+                print(f" Error: Ingrese un número entero válido para la cantidad de cupos.")
 
         elif opcion == "3":
             print("\n--- LISTA DE TALLERES ---")
@@ -137,6 +148,14 @@ def ejecutar():
                     )
 
         elif opcion == "6":
+            print("\n--- LISTA DE PARTICIPANTES ---")
+            if not participantes:
+                print("No hay participantes registrados.")
+            else:
+                for p in participantes.values():
+                    print(f"• [{p.id}] {p.nombre}")
+
+        elif opcion == "7":
             print("\n¡Hasta luego!")
             break
         else:
