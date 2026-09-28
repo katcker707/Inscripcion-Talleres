@@ -48,23 +48,41 @@ def ejecutar():
             except DatosParticipanteInvalidosError as e:
                 print(f" Error: {e}")
 
+
         elif opcion == "2":
+
             print("\n--- REGISTRAR TALLER ---")
+
             try:
-                id_taller = input("ID del taller (ej. T-001): ").strip()
+
                 nombre = input("Nombre del taller: ").strip()
+
                 cupos = int(input("Cantidad de cupos: "))
+
                 fecha = datetime.date.today()
 
                 taller = Talleres(
-                    id_taller=id_taller,
+
                     nombre=nombre,
+
                     cupos=cupos,
+
                     fecha=fecha,
+
                 )
-                gestor_talleres.registrar_taller(taller)
-                print(f" Taller '{nombre}' registrado con éxito.")
+
+                taller_registrado = gestor_talleres.registrar_taller(taller)
+
+                print(
+
+                    f" Taller '{nombre}' registrado con éxito. "
+
+                    f"ID: {taller_registrado.id}"
+
+                )
+
             except ValueError as e:
+
                 print(f" Error: {e}")
 
         elif opcion == "3":
