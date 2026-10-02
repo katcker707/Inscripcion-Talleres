@@ -10,7 +10,6 @@ class ParticipanteError(Exception):
 class DatosParticipanteInvalidosError(ParticipanteError, ValueError):
     """Los datos del participante no cumplen las reglas mínimas."""
 
-
 @dataclass(frozen=True)
 class Participante:
     """Persona que puede solicitar una plaza en un taller."""
