@@ -2,7 +2,7 @@
 ## Sesión 6 — Hallazgos y requisitos del proyecto
 
 - **Proyecto:** Sistema de inscripciones a talleres
-- **Integrantes:** Pendiente de completar por el equipo
+- **Integrantes:** Marcos Dominguez, Katrina Leigue, Ismael Diaz
 - **Fecha:** 2026-10-01
 - **Cliente o fuente consultada:**Ing. Sergio Barrientos, grabación de la entrevista, notas del equipo y guía de la actividad
 - **Flujo seleccionado:** Inscripción y cancelación de participantes, con control de cupo, lista de espera y promoción automática
@@ -166,7 +166,7 @@
 
 - **Aportes de cada integrante:**
  - **Ismael Diaz:** Formulación de preguntas sobre la lista de espera y cancelaciones.
- - **Marcos Dominguez:** Redacción de escenarios del flujo y límites de tiempo.
- - **Katrina Leigue:** Redacción de los requisitos de usuario autenticado, revisión del archivo y actualización del repositorio en GitHub.
+ - **Marcos Dominguez:** Redacción de escenarios del flujo y límites de tiempo,revisión del archivo y actualización del repositorio en GitHub.
+ - **Katrina Leigue:** Redacción de los requisitos de usuario autenticado.
 - **Asistencia de IA, si se utilizó:** ChatGPT / Gemini para estructurar el formato del Markdown según la plantilla requerida.
 
