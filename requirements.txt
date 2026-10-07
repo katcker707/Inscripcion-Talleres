@@ -1,1 +1,5 @@
 pytest>=8,<10
+Django==6.0.9
+django-mongodb-backend==6.0.4
+python-dotenv==1.2.4
+pytest-django==4.14.0

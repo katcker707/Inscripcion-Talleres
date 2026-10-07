@@ -1,29 +1,29 @@
-import datetime
+"""Menú de terminal con persistencia en MongoDB Atlas mediante Django."""
+import os
+import sys
+from datetime import datetime
+from pathlib import Path
 
-from proyecto.reglas import (
-    CupoAgotadoError,
-    DatosParticipanteInvalidosError,
-    InscripcionDuplicadaError,
-    ParticipanteNoEncontradoError,
-    TallerNoEncontradoError,
-    cupos_disponibles,
-    inscribir_participante,
-    registrar_participante,
-)
-from proyecto.reglas_talleres import GestorTalleres, Talleres
+# Permite tanto python -m proyecto.main como python proyecto/main.py.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+
+import django
+django.setup()
+
+from django.core.exceptions import ValidationError
+from django.db import DatabaseError, connections
+from django.utils import timezone
+from pymongo.errors import PyMongoError
+from proyecto.reglas_inscripciones import InscripcionError
+from proyecto.reglas_usuarios import DatosParticipanteInvalidosError
+from talleres.models import Participante, Taller, Inscripcion
+from talleres import services
 
 
-def _siguiente_id_taller(talleres_dict: dict) -> str:
-    """Calcula el siguiente ID autoincremental (T-001, T-002...) basándose en las claves del diccionario."""
-    numeros_existentes = [
-        int(taller_id.removeprefix("T-"))
-        for taller_id in talleres_dict
-        if isinstance(taller_id, str)
-        and taller_id.startswith("T-")
-        and taller_id.removeprefix("T-").isdigit()
-    ]
-    siguiente_numero = max(numeros_existentes, default=0) + 1
-    return f"T-{siguiente_numero:03d}"
+def leer_fecha(etiqueta):
+    texto = input(f"{etiqueta} (AAAA-MM-DD HH:MM): ").strip()
+    return timezone.make_aware(datetime.strptime(texto, "%Y-%m-%d %H:%M"))
 
 
 def mostrar_menu():
@@ -41,125 +41,68 @@ def mostrar_menu():
 
 
 def ejecutar():
-    participantes = {}
-    gestor_talleres = GestorTalleres()
-    inscripciones = []
-
-    while True:
-        mostrar_menu()
-        opcion = input("Selecciona una opción (1-7): ").strip()
-
-        # Obtener diccionario de talleres de forma segura
-        talleres_dict = getattr(
-            gestor_talleres, "_talleres", getattr(gestor_talleres, "talleres", {})
-        )
-
-        if opcion == "1":
-            print("\n--- REGISTRAR PARTICIPANTE ---")
-            nombre = input("Nombre del participante: ").strip()
+    print("Datos guardados en MongoDB Atlas. Horarios en UTC (AAAA-MM-DD HH:MM).")
+    try:
+        while True:
+            mostrar_menu()
+            opcion = input("Selecciona una opción (1-7): ").strip()
             try:
-                p = registrar_participante(participantes, nombre)
-                print(f" Participante registrado con éxito. ID: {p.id}")
-            except DatosParticipanteInvalidosError as e:
-                print(f" Error: {e}")
-
-
-        elif opcion == "2":
-
-            print("\n--- REGISTRAR TALLER ---")
-
-            try:
-                nombre = input("Nombre del taller: ").strip()
-
-                cupos = int(input("Cantidad de cupos: "))
-
-                fecha = datetime.date.today()
-
-                # Generar automáticamente el ID (T-001, T-002...)
-                id_taller = _siguiente_id_taller(talleres_dict)
-
-                # Construir el objeto Talleres
-                taller = Talleres(
-
-                    nombre=nombre,
-
-                    cupos=cupos,
-
-                    fecha=fecha,
-
-                )
-
-                # Registrar en el gestor
-                gestor_talleres.registrar_taller(taller)
-                print(f" Taller '{nombre}' registrado con éxito. ID: {id_taller}")
-
-            except ValueError as e:
-                print(f" Error: Ingrese un número entero válido para la cantidad de cupos.")
-
-        elif opcion == "3":
-            print("\n--- LISTA DE TALLERES ---")
-            if not talleres_dict:
-                print("No hay talleres registrados.")
-            else:
-                for t in talleres_dict.values():
-                    disponibles = cupos_disponibles(t, inscripciones)
-                    print(
-                        f"• [{t.id}] {t.nombre} | Cupos totales: {t.cupos} | Disponibles: {disponibles}"
-                    )
-
-        elif opcion == "4":
-            print("\n--- INSCRIBIR PARTICIPANTE ---")
-            p_id = input("ID del participante (ej. P-001): ").strip()
-            t_id = input("ID del taller (ej. T-001): ").strip()
-
-            try:
-                resultado = inscribir_participante(
-                    p_id,
-                    t_id,
-                    participantes,
-                    talleres_dict,
-                    inscripciones,
-                )
-                print(
-                    f" ¡Inscripción confirmada! Participante {resultado.participante_id} en taller {resultado.taller_id}"
-                )
-            except (
-                ParticipanteNoEncontradoError,
-                TallerNoEncontradoError,
-                InscripcionDuplicadaError,
-                CupoAgotadoError,
-            ) as e:
-                print(f" No se pudo realizar la inscripción: {e}")
-
-        elif opcion == "5":
-            print("\n--- INSCRIPCIONES REALIZADAS ---")
-            if not inscripciones:
-                print("Aún no hay inscripciones registradas.")
-            else:
-                for idx, ins in enumerate(inscripciones, start=1):
-                    p_obj = participantes.get(ins.participante_id)
-                    t_obj = gestor_talleres.buscar_taller(ins.taller_id)
-
-                    p_nombre = p_obj.nombre if p_obj else ins.participante_id
-                    t_nombre = t_obj.nombre if t_obj else ins.taller_id
-
-                    print(
-                        f"{idx}. {p_nombre} ({ins.participante_id}) -> {t_nombre} ({ins.taller_id}) [{ins.estado}]"
-                    )
-
-        elif opcion == "6":
-            print("\n--- LISTA DE PARTICIPANTES ---")
-            if not participantes:
-                print("No hay participantes registrados.")
-            else:
-                for p in participantes.values():
-                    print(f"• [{p.id}] {p.nombre}")
-
-        elif opcion == "7":
-            print("\n¡Hasta luego!")
-            break
-        else:
-            print("Opción inválida, intenta de nuevo.")
+                if opcion == "1":
+                    participante = services.registrar_participante(input("Nombre del participante: ").strip())
+                    print(f"Participante registrado con éxito. ID: {participante.codigo}")
+                elif opcion == "2":
+                    nombre = input("Nombre del taller: ").strip()
+                    cupos = int(input("Cantidad de cupos: "))
+                    inicio = leer_fecha("Inicio")
+                    fin = leer_fecha("Fin")
+                    descripcion = input("Descripción (opcional): ").strip()
+                    taller = services.registrar_taller(nombre, cupos, inicio, fin, descripcion)
+                    print(f"Taller '{taller.nombre}' registrado con éxito. ID: {taller.codigo}")
+                elif opcion == "3":
+                    talleres = list(Taller.objects.all())
+                    if not talleres:
+                        print("No hay talleres registrados.")
+                    for taller in talleres:
+                        print(f"[{taller.codigo}] {taller.nombre} | Cupos totales: {taller.cupos} | Disponibles: {services.cupos_disponibles(taller)}")
+                        print(f"  Inicio: {timezone.localtime(taller.fecha_inicio):%Y-%m-%d %H:%M} | Fin: {timezone.localtime(taller.fecha_fin):%Y-%m-%d %H:%M}")
+                elif opcion == "4":
+                    participante = input("ID del participante (ej. P-001): ").strip()
+                    taller = input("ID del taller (ej. T-001): ").strip()
+                    services.inscribir_participante(participante, taller)
+                    print(f"¡Inscripción confirmada! Participante {participante} en taller {taller}")
+                elif opcion == "5":
+                    inscripciones = list(Inscripcion.objects.all())
+                    if not inscripciones:
+                        print("Aún no hay inscripciones registradas.")
+                    participantes = {p.pk: p for p in Participante.objects.all()}
+                    talleres = {t.pk: t for t in Taller.objects.all()}
+                    for numero, inscripcion in enumerate(inscripciones, start=1):
+                        participante = participantes.get(inscripcion.participante_id)
+                        taller = talleres.get(inscripcion.taller_id)
+                        print(f"{numero}. {participante or inscripcion.participante_id} -> {taller or inscripcion.taller_id} [{inscripcion.estado}]")
+                elif opcion == "6":
+                    participantes = list(Participante.objects.all())
+                    if not participantes:
+                        print("No hay participantes registrados.")
+                    for participante in participantes:
+                        print(f"[{participante.codigo}] {participante.nombre}")
+                elif opcion == "7":
+                    print("¡Hasta luego! Los datos permanecen guardados.")
+                    break
+                else:
+                    print("Opción inválida, intenta de nuevo.")
+            except ValidationError as error:
+                print("No se pudo realizar la operación: " + "; ".join(error.messages))
+            except (InscripcionError, DatosParticipanteInvalidosError) as error:
+                print(f"No se pudo realizar la operación: {error}")
+            except ValueError:
+                print("Datos inválidos. Usá cupos enteros y fechas con formato AAAA-MM-DD HH:MM.")
+            except (DatabaseError, PyMongoError):
+                print("No se pudo completar la operación en Atlas. Revisá la conexión, los permisos, la IP autorizada y las migraciones. Consultá los listados antes de repetir una escritura.")
+    except (EOFError, KeyboardInterrupt):
+        print("\n¡Hasta luego! Los datos permanecen guardados.")
+    finally:
+        connections.close_all()
 
 
 if __name__ == "__main__":
