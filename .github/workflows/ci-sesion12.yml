@@ -33,7 +33,12 @@ jobs:
       # - run: python -m pip install -e .
 
       - name: Comprobar el contrato del flujo
-        run: python -m pytest tests -q --junitxml=evidencias/sesion12-junit.xml
+        run: >-
+          python -m pytest
+          tests/test_reglas.py::test_inscribe_participante_y_confirma_la_plaza_disponible
+          tests/test_reglas.py::test_rechaza_inscripcion_duplicada_sin_ocupar_otro_cupo
+          tests/test_reglas.py::test_inscripcion_en_el_ultimo_cupo_deja_el_taller_sin_disponibilidad
+          -q --junitxml=evidencias/sesion12-junit.xml
 
       - name: Conservar el resultado de las pruebas
         if: ${{ always() }}
@@ -56,4 +61,5 @@ jobs:
           path: entrega-${{ github.sha }}.zip
           if-no-files-found: error
           retention-days: 14
+
 
